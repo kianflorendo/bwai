@@ -168,9 +168,18 @@ const API_CLIENT_MAP = [
 
 // Uses Google Application Default Credentials (ADC).
 // Users need to run "gcloud auth application-default login" in order to use the proxy.
-const auth = new GoogleAuth({
+const authOptions = {
   scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-});
+};
+// If running on Railway/Render, we can pass the raw JSON string as an environment variable
+if (process.env.GOOGLE_CREDENTIALS_JSON) {
+  try {
+    authOptions.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+  } catch (e) {
+    console.error("Failed to parse GOOGLE_CREDENTIALS_JSON:", e);
+  }
+}
+const auth = new GoogleAuth(authOptions);
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
