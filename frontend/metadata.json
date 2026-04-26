@@ -1,0 +1,4 @@
+{
+  "name": "EcoSentinel Orchestrator",
+  "description": "Autonomous Environmental Orchestration Agent monitoring simulated ESP32 telemetry (Temp, Humidity, Heat Index) with real-time AI suggestions and visual LED alerts."
+}
