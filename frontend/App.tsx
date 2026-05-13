@@ -34,7 +34,7 @@ export default function App() {
   const [isGeneratingAdvice, setIsGeneratingAdvice] = useState(false);
 
   // Refs for simulation to avoid dependency cycles in intervals
-  const simBaseTemp = useRef(24);
+  const simBaseTemp = useRef(30);
   const simBaseHum = useRef(50);
   const simTrend = useRef(1); // 1 for rising, -1 for falling
 
@@ -44,7 +44,7 @@ export default function App() {
     const initialHistory: TelemetryData[] = [];
     let t = Date.now() - 60000 * 20; // 20 mins ago
     for (let i = 0; i < 20; i++) {
-      const temp = generateNoise(24, 2);
+      const temp = generateNoise(30, 1.5);
       const hum = generateNoise(50, 5);
       initialHistory.push({
         temperature: temp,
@@ -59,16 +59,17 @@ export default function App() {
     // Start real-time simulation
     const interval = setInterval(() => {
       // Slowly drift base values to simulate environmental changes
-      if (Math.random() > 0.9) simTrend.current *= -1;
-      
-      simBaseTemp.current += (0.1 * simTrend.current) + generateNoise(0, 0.2);
+      if (Math.random() > 0.92) simTrend.current *= -1;
+
+      // Gentle drift between 30-36C
+      simBaseTemp.current += (0.05 * simTrend.current) + generateNoise(0, 0.1);
       simBaseHum.current += (0.5 * simTrend.current) + generateNoise(0, 1);
 
       // Clamp values to somewhat realistic ranges for a facility
-      simBaseTemp.current = Math.max(18, Math.min(36, simBaseTemp.current));
+      simBaseTemp.current = Math.max(30, Math.min(36, simBaseTemp.current));
       simBaseHum.current = Math.max(30, Math.min(90, simBaseHum.current));
 
-      const newTemp = generateNoise(simBaseTemp.current, 0.5);
+      const newTemp = generateNoise(simBaseTemp.current, 0.4);
       const newHum = generateNoise(simBaseHum.current, 2);
       
       const newData: TelemetryData = {

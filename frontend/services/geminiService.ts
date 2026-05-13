@@ -1,13 +1,16 @@
 import { GoogleGenAI } from '@google/genai';
 import { TelemetryData, AlertLevel } from '../types.ts';
 
-// Initialize the SDK. It automatically picks up process.env.API_KEY in the environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY, vertexai: true });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateEnvironmentalAdvice = async (
   telemetry: TelemetryData,
   level: AlertLevel
 ): Promise<string> => {
+  if (!ai) {
+    return 'Missing Gemini API key. Set VITE_GEMINI_API_KEY in frontend/.env.';
+  }
   const prompt = `
     You are an Autonomous Environmental Orchestration Agent monitoring a sensitive facility.
     Current Telemetry:
@@ -32,7 +35,7 @@ export const generateEnvironmentalAdvice = async (
         temperature: 0.4, // Lower temperature for more deterministic, operational advice
       }
     });
-    
+
     return response.text || "No suggestion generated.";
   } catch (error) {
     console.error("Error generating AI advice:", error);

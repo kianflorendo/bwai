@@ -1,11 +1,11 @@
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
 #include "DHT.h"
+#include <ArduinoJson.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
 
 // ================= Configurations =================
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+const char *ssid = "YOUR_WIFI_SSID";
+const char *password = "YOUR_WIFI_PASSWORD";
 
 // Supabase Credentials (Make sure to keep the /rest/v1/ at the end of the URL)
 const String supabaseUrl = "https://YOUR_PROJECT_ID.supabase.co/rest/v1/";
@@ -22,11 +22,11 @@ const int RED_LED = 19;
 // ================= Setup =================
 void setup() {
   Serial.begin(115200);
-  
+
   // Initialize Pins
   pinMode(GREEN_LED, OUTPUT);
   pinMode(RED_LED, OUTPUT);
-  
+
   // Start with a nominal "Safe" state for the presentation
   digitalWrite(GREEN_LED, HIGH);
   digitalWrite(RED_LED, LOW);
@@ -47,7 +47,7 @@ void setup() {
 // ================= Main Loop =================
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
-    
+
     // Step 1: Read Sensor & Send to Cloud
     float h = dht.readHumidity();
     if (!isnan(h)) {
@@ -59,10 +59,10 @@ void loop() {
 
     // Step 2: Check for AI Commands
     checkCommands();
-    
   }
-  // Poll every 3 seconds. Fast enough for a live demo, slow enough to avoid API rate limits.
-  delay(3000); 
+  // Poll every 3 seconds. Fast enough for a live demo, slow enough to avoid API
+  // rate limits.
+  delay(3000);
 }
 
 // ================= Helper Functions =================
@@ -73,10 +73,10 @@ void postTelemetry(float humidity) {
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabaseKey);
   http.addHeader("Authorization", "Bearer " + supabaseKey);
-  
+
   // Create JSON payload
   String payload = "{\"humidity\": " + String(humidity) + "}";
-  
+
   int httpResponseCode = http.POST(payload);
   if (httpResponseCode > 0) {
     Serial.println("Telemetry POSTed successfully.");
@@ -93,34 +93,34 @@ void checkCommands() {
   http.begin(supabaseUrl + "device_commands?executed=eq.false&limit=1");
   http.addHeader("apikey", supabaseKey);
   http.addHeader("Authorization", "Bearer " + supabaseKey);
-  
+
   int httpCode = http.GET();
   if (httpCode == 200) {
     String payload = http.getString();
-    
+
     // Parse the JSON array
     DynamicJsonDocument doc(1024);
     DeserializationError error = deserializeJson(doc, payload);
-    
+
     if (!error && doc.size() > 0) {
       int cmd = doc[0]["command_code"];
       int id = doc[0]["id"];
-      
+
       Serial.println("Received Command Code: " + String(cmd));
 
       // Execute Physical Hardware Logic
-      if (cmd == 1) { 
+      if (cmd == 1) {
         // 1 = SAFE
         digitalWrite(GREEN_LED, HIGH);
         digitalWrite(RED_LED, LOW);
-      } else if (cmd == 2) { 
+      } else if (cmd == 2) {
         // 2 = WARNING
         digitalWrite(GREEN_LED, LOW);
         digitalWrite(RED_LED, HIGH);
       }
-      
+
       // Tell Supabase we finished the task so it doesn't loop
-      markExecuted(id); 
+      markExecuted(id);
     }
   }
   http.end();
@@ -133,11 +133,11 @@ void markExecuted(int id) {
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", supabaseKey);
   http.addHeader("Authorization", "Bearer " + supabaseKey);
-  
+
   // PATCH only updates the fields we send, leaving everything else intact
   String payload = "{\"executed\": true}";
   int httpResponseCode = http.PATCH(payload);
-  
+
   if (httpResponseCode > 0) {
     Serial.println("Command marked as executed in database.");
   }
